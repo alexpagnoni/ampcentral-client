@@ -1,0 +1,12 @@
+<?xml version='1.0'?>
+<database>
+
+    <table  name="ampcentralremotereps">
+        <field  name="id"   type="integer"  notnull="1"/>
+        <field  name="accountid" type="integer" notnull="1"/>
+        <key    field="id"  type="unique"/>
+    </table>
+
+    <sequence   name="ampcentralremotereps_id_seq"/>
+
+</database>

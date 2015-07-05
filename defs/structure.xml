@@ -1,0 +1,32 @@
+<?xml version='1.0'?>
+<structure>
+
+    <rootpage   
+        name="ampcentral-client"    
+        file="ampcentral-client.php"    
+        themeicon="nfs_mount" 
+        themeicontype="devices"    
+        catalog="ampcentral-client_misc"    
+        category="ampoliros"/>
+
+    <catalog    
+        name="ampcentral-client_misc"  
+        file="ampcentral-client_misc.catalog"/>
+
+    <catalog    
+        name="ampcentral-client_root_client"   
+        file="ampcentral-client_root_client.catalog"/>
+
+    <library    
+        name="ampcentral-client"    
+        file="ampcentral-client.library"/>
+
+    <roottable  
+        name="ampcentralremotereps" 
+        file="ampcentralremotereps.xsql"/>
+
+    <tempdir    
+        name="ampcentral-client"    
+        file="ampcentral-client"/>
+
+</structure>

@@ -1,0 +1,39 @@
+# Module short name
+MODULEIDNAME       = ampcentral-client
+
+# Module version number
+MODULEVERSION      = 2.1.1
+
+# Module release date
+MODULEDATE         = 2003/03/26
+
+# Module long description
+MODULEDESCRIPTION  = AmpCentral.
+
+# Module dependencies
+MODULEDEPENDENCIES = ampoliros[3.1.2]
+
+# Module suggestions
+MODULESUGGESTIONS  =
+
+MODULE_AUTHOR        = Solarix
+
+MODULE_AUTHOR_EMAIL  = info@solarix.biz
+
+MODULE_AUTHOR_SITE   = http://www.solarix.biz/
+
+MODULE_SUPPORT_EMAIL = support@ampoliros.com
+
+MODULE_BUGS_EMAIL    = bugs@ampoliros.com
+
+MODULE_COPYRIGHT     = Copyright (c) 2000-2003 Solarix
+
+MODULE_LICENSE       = GPL
+
+MODULE_LICENSE_FILE  = LICENSE
+
+MODULE_MAINTAINER    = Alex Pagnoni - Solarix
+
+MODULE_MAINTAINER_EMAIL = alex.pagnoni@solarix.biz
+
+MODULE_CATEGORY      = ampoliros

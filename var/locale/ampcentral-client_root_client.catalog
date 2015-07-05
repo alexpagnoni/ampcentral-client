@@ -1,0 +1,52 @@
+# Global
+
+ampcentral-client.title                 = AmpCentral Client
+
+repository.toolbar                      = Repositories
+newrepository.toolbar                   = New account
+refresh.button				= Update
+
+# Repositories
+
+repositories.title                      = Repositories
+no_repositories.status                  = There are no defined repositories.
+repository_name.header                  = Name
+remove_account.button                   = Remove this account
+repository_modules.button               = Modules
+
+remove_account.confirm                  = Do you really want to remove this account from the repositories list?
+repository_removed.status               = Account removed.
+repository_not_removed.status           = ERROR: Account not removed.
+
+# New repository
+
+newrepository.title                     = New account
+account.label                           = Account
+new_repository.submit                   = Add
+
+repository_added.status                 = Repository added.
+repository_not_added.status             = ERROR: Repository not added.
+
+# Repository modules
+
+repositorymodules.title                 = Repository modules
+module.header                           = Module
+lastversion.header                      = Last version
+category.header                         = Category
+date.header                             = Date
+dependencies.header                     = Dependencies (and suggestions)
+installed_version.header                = Installed version
+none_version.label                      = None
+install_module.button                   = Install
+reinstall_module.button                 = Reinstall
+update_module.button                    = Update
+missing_deps.label                      = Missing dependencies:
+module_installed.status                 = Module installed.
+module_not_installed.status             = ERROR: Module not installed.
+suggestions.label                       = Suggestions:
+module_versions.button                  = Versions
+downgrade_module.button                 = Downgrade
+
+# Module versions
+
+moduleversions.title                    = Module versions

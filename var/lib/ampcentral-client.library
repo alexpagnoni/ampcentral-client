@@ -1,0 +1,332 @@
+<?php
+if ( !defined( 'AMPCENTRAL-CLIENT_LIBRARY' ) )
+{
+define( 'AMPCENTRAL-CLIENT_LIBRARY', true );
+
+OpenLibrary( 'xmlrpc.library' );
+OpenLibrary( 'cache.library' );
+OpenLibrary( 'logger.library' );
+
+class AmpCentralRemoteServer
+{
+    var $mId;
+    var $mrAmpDb;
+    var $mLogCenter;
+    var $mAccountId;
+    var $mXAccount;
+    var $mXClient;
+
+    function AmpCentralRemoteServer( &$rampDb, $repId )
+    {
+        $this->mrAmpDb = &$rampDb;
+        $this->mLogCenter = new LogCenter( 'ampcentral-client' );
+
+        if ( $repId )
+        {
+            $rep_query = &$this->mrAmpDb->Execute(
+                'SELECT * '.
+                'FROM ampcentralremotereps '.
+                'WHERE id='.$repId );
+
+            if ( $rep_query->NumRows() )
+            {
+                $this->mId = $repId;
+                $this->mAccountId = $rep_query->Fields( 'accountid' );
+                $this->SetClient();
+            }
+        }
+    }
+
+    function SetClient()
+    {
+        $this->mXAccount = new XmlRpcAccount(
+            $this->mrAmpDb,
+            $this->mAccountId );
+
+        $this->mXClient = new XmlRpc_Client(
+            $this->mXAccount->mCgi,
+            $this->mXAccount->mHost,
+            $this->mXAccount->mPort );
+
+        $this->mXClient->SetCredentials(
+            $this->mXAccount->mUsername,
+            $this->mXAccount->mPassword );
+
+        //$this->mXClient->SetDebug( true );
+    }
+
+    function Add( $accountId )
+    {
+        $result = false;
+
+        if ( $accountId )
+        {
+            $rep_id = $this->mrAmpDb->NextSeqValue( 'ampcentralremotereps_id_seq' );
+
+            if ( $this->mrAmpDb->Execute(
+                'INSERT INTO ampcentralremotereps '.
+                'VALUES ('.$rep_id.','.
+                $accountId.')' ) )
+            {
+                $this->mId = $rep_id;
+                $this->mAccountId = $accountId;
+                $this->SetClient();
+
+                $result = true;
+            }
+        }
+
+        return $result;
+    }
+
+    function Remove()
+    {
+        $result = false;
+
+        if ( $this->mId )
+        {
+            if ( $this->mrAmpDb->Execute(
+                'DELETE FROM ampcentralremotereps '.
+                'WHERE id='.$this->mId ) )
+            {
+                $cached_item = new CachedItem(
+                    $this->mrAmpDb,
+                    'ampcentral-client',
+                    'repositories-'.$this->mId );
+
+                $cached_item->Destroy();
+
+                $this->mId = 0;
+                $result = true;
+            }
+        }
+
+        return $result;
+    }
+
+    function ListAvailableRepositories( $refresh = false )
+    {
+        $result = false;
+
+        $cached_item = new CachedItem(
+            $this->mrAmpDb,
+            'ampcentral-client',
+            'repositories-'.$this->mId );
+
+        $goon = true;
+
+        if ( !$refresh )
+        {
+            $cache_content = $cached_item->Retrieve();
+
+            if ( $cache_content != false )
+            {
+                $goon = false;
+                $result = unserialize( $cache_content );
+            }
+        }
+
+        if ( $goon )
+        {
+            $xmlrpc_message = new XmlRpcMsg( 'ampcentral-server.list_available_repositories' );
+            $xmlrpc_resp = $this->mXClient->Send( $xmlrpc_message );
+
+            if ( $xmlrpc_resp )
+            {
+                if ( !$xmlrpc_resp->FaultCode() )
+                {
+                    $xv = xmlrpc_decode( $xmlrpc_resp->Value() );
+
+                    if ( is_array( $xv ) )
+                    {
+                        $cached_item->Store( serialize( $xv ) );
+
+                        $result = $xv;
+                    }
+                    else $this->mLogCenter->LogEvent( array( 'root' => '' ), 'ampcentral-client.ampcentral-client_library.ampcentralremoteserver_class.listavailablerepositories',
+                                                     'Not an array from server', LOGGER_ERROR );
+                }
+                else $this->mLogCenter->LogEvent( array( 'root' => '' ), 'ampcentral-client.ampcentral-client_library.ampcentralremoteserver_class.listavailablerepositories',
+                                                 'Error in response from server: '.$xmlrpc_resp->FaultString(), LOGGER_ERROR );
+            }
+            else $this->mLogCenter->LogEvent( array( 'root' => '' ), 'ampcentral-client.ampcentral-client_library.ampcentralremoteserver_class.listavailablerepositories',
+                                             'Invalid response from server', LOGGER_ERROR );
+        }
+
+        return $result;
+    }
+
+    function ListAvailableModules( $repId, $refresh = false )
+    {
+        $result = false;
+
+        $cached_item = new CachedItem( $this->mrAmpDb, 'ampcentral-client', 'repository_modules-'.$this->mId.'-'.$repId );
+
+        $goon = true;
+
+        if ( !$refresh )
+        {
+            $cache_content = $cached_item->Retrieve();
+
+            if ( $cache_content != false )
+            {
+                $goon = false;
+                $result = unserialize( $cache_content );
+            }
+        }
+
+        if ( $goon )
+        {
+            $xmlrpc_message = new XmlRpcMsg(
+                'ampcentral-server.list_available_modules',
+                array(
+                    new XmlRpcVal( $repId, 'int' ) ) );
+
+            $xmlrpc_resp = $this->mXClient->Send( $xmlrpc_message );
+
+            if ( $xmlrpc_resp )
+            {
+                if ( !$xmlrpc_resp->FaultCode() )
+                {
+                    $xv = xmlrpc_decode( $xmlrpc_resp->Value() );
+
+                    if ( is_array( $xv ) )
+                    {
+                        $cached_item->Store( serialize( $xv ) );
+
+                        $result = $xv;
+                    }
+                    else $this->mLogCenter->LogEvent( array( 'root' => '' ), 'ampcentral-client.ampcentral-client_library.ampcentralremoteserver_class.listavailablemodules',
+                                                     'Not an array from server', LOGGER_ERROR );
+                }
+                else $this->mLogCenter->LogEvent( array( 'root' => '' ), 'ampcentral-client.ampcentral-client_library.ampcentralremoteserver_class.listavailablemodules',
+                                                 'Error in response from server: '.$xmlrpc_resp->FaultString(), LOGGER_ERROR );
+            }
+            else $this->mLogCenter->LogEvent( array( 'root' => '' ), 'ampcentral-client.ampcentral-client_library.ampcentralremoteserver_class.listavailablemodules',
+                                             'Invalid response from server', LOGGER_ERROR );
+        }
+
+        return $result;
+    }
+
+    function ListAvailableModuleVersions( $repId, $moduleId, $refresh = false )
+    {
+        $result = false;
+
+        $cached_item = new CachedItem(
+            $this->mrAmpDb,
+            'ampcentral-client',
+            'repository_module_versions-'.$this->mId.'-'.$repId.'-'.$moduleId );
+
+        $goon = true;
+
+        if ( !$refresh )
+        {
+            $cache_content = $cached_item->Retrieve();
+
+            if ( $cache_content != false )
+            {
+                $goon = false;
+                $result = unserialize( $cache_content );
+            }
+        }
+
+        if ( $goon )
+        {
+            $xmlrpc_message = new XmlRpcMsg(
+                'ampcentral-server.list_available_module_versions',
+                array(
+                    new XmlRpcVal( $repId, 'int' ),
+                    new XmlRpcVal( $moduleId, 'int' ) ) );
+
+            $xmlrpc_resp = $this->mXClient->Send( $xmlrpc_message );
+
+            if ( $xmlrpc_resp )
+            {
+                if ( !$xmlrpc_resp->FaultCode() )
+                {
+                    $xv = xmlrpc_decode( $xmlrpc_resp->Value() );
+
+                    if ( is_array( $xv ) )
+                    {
+                        $cached_item->Store( serialize( $xv ) );
+
+                        $result = $xv;
+                    }
+                    else $this->mLogCenter->LogEvent(
+                        array( 'root' => '' ),
+                        'ampcentral-client.ampcentral-client_library.ampcentralremoteserver_class.listavailablemodules',
+                        'Not an array from server',
+                        LOGGER_ERROR );
+                }
+                else $this->mLogCenter->LogEvent(
+                    array( 'root' => '' ),
+                    'ampcentral-client.ampcentral-client_library.ampcentralremoteserver_class.listavailablemodules',
+                    'Error in response from server: '.$xmlrpc_resp->FaultString(),
+                    LOGGER_ERROR );
+            }
+            else $this->mLogCenter->LogEvent(
+                array( 'root' => '' ),
+                'ampcentral-client.ampcentral-client_library.ampcentralremoteserver_class.listavailablemodules',
+                'Invalid response from server',
+                LOGGER_ERROR );
+        }
+
+        return $result;
+    }
+
+    function RetrieveModule( $repId, $moduleId, $moduleVersion = '' )
+    {
+        $result = false;
+
+        $xmlrpc_message = new XmlRpcMsg(
+            'ampcentral-server.retrieve_module',
+            array(
+                new XmlRpcVal( $repId, 'int' ),
+                new XmlRpcVal( $moduleId, 'int' ),
+                new XmlRpcVal( $moduleVersion, 'string' )
+                ) );
+
+        $xmlrpc_resp = $this->mXClient->Send( $xmlrpc_message );
+
+        if ( $xmlrpc_resp )
+        {
+            if ( !$xmlrpc_resp->FaultCode() )
+            {
+                $xv = $xmlrpc_resp->Value();
+
+                $tmp_filename = TMP_PATH.'ampcentral-client/'.md5( uniqid( rand() ) );
+
+                $fh = fopen( $tmp_filename, 'wb' );
+                if ( $fh )
+                {
+                    OpenLibrary( 'modulesbase.library' );
+
+                    fputs( $fh, $xv->ScalarVal() );
+                    fclose( $fh );
+
+                    unset( $xv );
+                    unset( $xmlrpc_resp );
+
+                    $tmp_module = new Module( $this->mrAmpDb, '' );
+                    if ( $tmp_module->Install( $tmp_filename ) ) $result = true;
+                }
+            }
+            else $this->mLogCenter->LogEvent(
+                array( 'root' => '' ),
+                'ampcentral-client.ampcentral-client_library.ampcentralremoteserver_class.retrievemodule',
+                'Error in response from server: '.$xmlrpc_resp->FaultString(),
+                LOGGER_ERROR );
+        }
+        else $this->mLogCenter->LogEvent(
+            array( 'root' => '' ),
+            'ampcentral-client.ampcentral-client_library.ampcentralremoteserver_class.retrievemodule',
+            'Invalid response from server',
+            LOGGER_ERROR );
+
+        return $result;
+    }
+}
+
+}
+?>

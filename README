@@ -1,0 +1,63 @@
+
+                              AmpCentral
+
+          http://www.ampoliros.com/projects/admin/ampcentral
+
+
+
+General information
+-------------------
+
+AmpCentral Client is the client part of the AmpCentral system.
+
+
+License
+-------
+
+See the file named LICENSE.
+
+
+
+Requirements
+------------
+
+Serverside:
+	A working Ampoliros II platform installation.
+
+Clientside:
+	a web browser with HTML 4.0 and CSS support.
+
+
+
+Installation
+------------
+
+See the file named INSTALL.
+
+
+
+Additional Information
+----------------------
+
+AmpCentral official home page:
+	http://www.ampcentral.com/
+
+AmpCentral latest distribution:
+	http://www.ampcentral.com/
+
+Ampoliros official home page:
+	http://www.ampoliros.com
+
+To submit a bug report:
+	send an email to bugs@ampoliros.com
+
+To submit a support request:
+	send an email to support@ampoliros.com
+
+
+
+Disclaimer
+----------
+
+There is no warranty, expressed or implied, associated with this product.
+Use at your own risk.
